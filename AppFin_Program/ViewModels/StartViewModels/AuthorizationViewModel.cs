@@ -46,7 +46,7 @@ namespace AppFin_Program.ViewModels.StartViewModels
                 CurrentUser = user;
             }
         }
-
+        public AuthorizationViewModel(){}
         public AuthorizationViewModel(SessionService sessionService, Action<string> navigateTo)
         {
             Login = "admin";
@@ -112,11 +112,6 @@ namespace AppFin_Program.ViewModels.StartViewModels
                 StatusMessage = "An error occurred during login.";
                 return false;
             }
-        }
-        
-        public AuthorizationViewModel()
-        {
-            throw new NotImplementedException();
         }
     }
 }

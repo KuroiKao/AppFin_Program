@@ -5,11 +5,12 @@
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="AppFin_Program.Views.WindowViews.ReportView"
              xmlns:vm="using:AppFin_Program.ViewModels.WindowViewModels"
-             x:DataType="vm:ReportViewModel">
+             x:DataType="vm:ReportViewModel"
+             x:CompileBindings="True">
     <Design.DataContext>
         <vm:ReportViewModel/>
     </Design.DataContext>
     <StackPanel>
-        <TextBlock Text="Reports Window"/>
+        <TextBlock Text="{Binding Greeteng}"/>
     </StackPanel>
 </UserControl>

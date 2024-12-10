@@ -2,6 +2,7 @@
 using ReactiveUI;
 using System.Collections.Generic;
 using System;
+using AppFin_Program.Models;
 using AppFin_Program.ViewModels.StartViewModels;
 using AppFin_Program.ViewModels.WindowViewModels;
 using static AppFin_Program.ViewModels.StartViewModels.AuthorizationViewModel;
@@ -11,7 +12,6 @@ namespace AppFin_Program.ViewModels.RoutingViewModels
     public class RoutingViewModel : ViewModelBase
     {
         private IRoutableViewModel? _currentView;
-        private readonly SessionService _sessionService;
 
         public IRoutableViewModel? CurrentView
         {
@@ -22,13 +22,14 @@ namespace AppFin_Program.ViewModels.RoutingViewModels
 
         public RoutingViewModel()
         {
-            _sessionService = new SessionService();
+            var sessionService = new SessionService();
 
             _routes = new Dictionary<string, Func<IRoutableViewModel>>
         {
-            { "authorization", () => new AuthorizationViewModel(_sessionService, NavigateTo) },
+            { "authorization", () => new AuthorizationViewModel(sessionService, NavigateTo) },
             { "registration", () => new RegistrationViewModel(NavigateTo) },
-            { "home", () => new HomeViewModel(_sessionService, NavigateTo) }
+            { "home", () => new HomeViewModel(dbContext: new FinAppDataBaseContext(),sessionService, NavigateTo) },
+            { "report", () => new ReportViewModel(dbContext: new FinAppDataBaseContext(), sessionService)} 
         };
             NavigateTo("authorization");
         }

@@ -12,7 +12,6 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Reactive;
-using System.Text.RegularExpressions;
 using static AppFin_Program.ViewModels.StartViewModels.AuthorizationViewModel;
 
 namespace AppFin_Program.ViewModels.WindowViewModels
@@ -27,8 +26,6 @@ namespace AppFin_Program.ViewModels.WindowViewModels
         public ReactiveCommand<Unit, int> CancelAddNoteCommand { get; }
         public ReactiveCommand<Unit, Unit> ConfirmAddNoteCommand { get; }
 
-
-        public IEnumerable<ISeries> Series { get; set; }
         public ObservableCollection<Transaction> IncomeTransactions { get; } = new();
         public ObservableCollection<Transaction> ExpenseTransactions { get; } = new();
         public ObservableCollection<ISeries> IncomeSeries { get; } = new();
@@ -44,7 +41,7 @@ namespace AppFin_Program.ViewModels.WindowViewModels
 
         public class TransactionDisplayModel
         {
-            public string CategoryName { get; set; }
+            public required string CategoryName { get; set; }
             public decimal Amount { get; set; }
             public DateTimeOffset TransactionDate { get; set; }
         }
@@ -76,10 +73,13 @@ namespace AppFin_Program.ViewModels.WindowViewModels
             get => _statusMessage;
             set => this.RaiseAndSetIfChanged(ref _statusMessage, value);
         }
-
-        public HomeViewModel(SessionService sessionService, Action<string> navigateTo)
+        public HomeViewModel()
         {
-            _dbContext = new FinAppDataBaseContext();
+
+        }
+        public HomeViewModel(FinAppDataBaseContext dbContext, SessionService sessionService, Action<string> navigateTo)
+        {
+            _dbContext = dbContext;
             _sessionService = sessionService;
             if (_sessionService.CurrentUser != null)
                 Debug.WriteLine($"Id current user: {_sessionService.CurrentUser.Id}");
@@ -95,16 +95,13 @@ namespace AppFin_Program.ViewModels.WindowViewModels
             ConfirmAddNoteCommand = ReactiveCommand.Create(AddNote);
 
             LoadTransactions();
-            LoadDataGrid();
+           
         }
 
-        public HomeViewModel()
-        {
-            throw new NotImplementedException();
-        }
 
         private void AddNote()
         {
+             
             if (!ValidateAddNote())
             {
                 return;
@@ -118,8 +115,8 @@ namespace AppFin_Program.ViewModels.WindowViewModels
                     {
                         var transactionCategory = new TransactionCategory
                         {
-                            CategoryId = SelectedCategory.Id,
-                            TransactionTypeId = SelectedTypes.Id
+                            CategoryId = SelectedCategory!.Id,
+                            TransactionTypeId = SelectedTypes!.Id
                         };
 
                         _dbContext.TransactionCategories.Add(transactionCategory);
@@ -127,9 +124,9 @@ namespace AppFin_Program.ViewModels.WindowViewModels
 
                         var transactionRecord = new Transaction
                         {
-                            UserId = _sessionService.CurrentUser.Id,
+                            UserId = _sessionService.CurrentUser!.Id,
                             Amount = decimal.Parse(NewIncomeAmount),
-                            TransactionDate = IsToday ? DateTimeOffset.Now : SelectedDate ?? DateTimeOffset.Now,
+                            TransactionDate = SelectedDate ?? DateTimeOffset.Now,
                             TransactionCategoriesId = transactionCategory.Id,
                         };
 
@@ -149,7 +146,6 @@ namespace AppFin_Program.ViewModels.WindowViewModels
                 StatusMessage = $"Error adding note: {ex.Message}";
             }
         }
-
         private bool ValidateAddNote()
         {
             if (SelectedCategory == null)
@@ -164,6 +160,11 @@ namespace AppFin_Program.ViewModels.WindowViewModels
                 return false;
             }
 
+            if (SelectedDate == null)
+            {
+                StatusMessage = "Не выбрана дата";
+            }
+
             return true;
         }
         private void LoadTransactions()
@@ -173,16 +174,18 @@ namespace AppFin_Program.ViewModels.WindowViewModels
                 var transactions = _dbContext.Transactions
                     .Include(t => t.TransactionCategories.TransactionType)
                     .Include(t => t.TransactionCategories.Category)
-                    .Where(t => t.UserId == _sessionService.CurrentUser.Id)
+                    .Where(t => t.UserId == _sessionService.CurrentUser!.Id)
                     .ToList();
 
                 ProcessTransactionsByType(transactions, "Доход");
-                ProcessTransactionsByType(transactions, "Расход");
-
                 IncomeTransactions.Clear();
-                ExpenseTransactions.Clear();
                 IncomeTransactions.AddRange(transactions.Where(t => t.TransactionCategories.TransactionType.Name == "Доход"));
+
+                ProcessTransactionsByType(transactions, "Расход");
+                ExpenseTransactions.Clear();
                 ExpenseTransactions.AddRange(transactions.Where(t => t.TransactionCategories.TransactionType.Name == "Расход"));
+
+                LoadDataGrid();
             }
             catch (Exception ex)
             {
@@ -195,7 +198,7 @@ namespace AppFin_Program.ViewModels.WindowViewModels
                 .Where(t => t.TransactionCategories.TransactionType.Name == transactionType)
                 .ToList();
 
-            bool isTypeEmpty = !filteredTransactions.Any();
+            bool isTypeEmpty = filteredTransactions.Count == 0;
 
             if (transactionType == "Доход")
             {
@@ -250,7 +253,7 @@ namespace AppFin_Program.ViewModels.WindowViewModels
             var transactions = _dbContext.Transactions
                 .Include(t => t.TransactionCategories)
                 .ThenInclude(tc => tc.Category)
-                .Where(t => t.UserId == _sessionService.CurrentUser.Id)
+                .Where(t => t.UserId == _sessionService.CurrentUser!.Id)
                 .Where(t => t.TransactionCategories.TransactionType.Name == transactionType)
                 .ToList();
 

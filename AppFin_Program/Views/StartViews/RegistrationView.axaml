@@ -1,18 +1,16 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:AppFin_Program.ViewModels.StartViewModels"
-             x:Class="AppFin_Program.Views.StartViews.RegistrationView"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
+             mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="450"
              x:CompileBindings="True"
-             x:DataType="vm:RegistrationViewModel"
-             Height="400"
-             Width="400">
+             x:Class="AppFin_Program.Views.StartViews.RegistrationView"			 
+             x:DataType="vm:RegistrationViewModel">
     <Design.DataContext>
         <vm:RegistrationViewModel/>
     </Design.DataContext>
-    <Grid RowDefinitions="10, Auto, 50, *, 10" ColumnDefinitions="10, *, *, 10" 
+    <Grid RowDefinitions="10, *, 50, 50, 10" ColumnDefinitions="10, *, *, 10" 
           ShowGridLines="False">
         <StackPanel Grid.ColumnSpan="2" Grid.Row="1" Grid.Column="1"
                     VerticalAlignment="Center" HorizontalAlignment="Center">

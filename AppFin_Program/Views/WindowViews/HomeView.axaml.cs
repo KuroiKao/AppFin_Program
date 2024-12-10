@@ -10,6 +10,5 @@ public partial class HomeView : UserControl
     public HomeView()
     {
         InitializeComponent();
-        this.DataContext = new HomeViewModel();
     }
 }

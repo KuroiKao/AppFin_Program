@@ -20,50 +20,42 @@ namespace AppFin_Program.ViewModels.StartViewModels
             get => _login;
             set => this.RaiseAndSetIfChanged(ref _login, value);
         }
-
         private string _password;
         public string Password
         {
             get => _password;
             set => this.RaiseAndSetIfChanged(ref _password, value);
         }
-
         private string _confirmPassword;
         public string ConfirmPassword
         {
             get => _confirmPassword;
             set => this.RaiseAndSetIfChanged(ref _confirmPassword, value);
         }
-
         private string? _email;
         public string? Email
         {
             get => _email;
             set => this.RaiseAndSetIfChanged(ref _email, value);
         }
-
         private string _statusMessage;
         public string StatusMessage
         {
             get => _statusMessage;
             set => this.RaiseAndSetIfChanged(ref _statusMessage, value);
         }
-
-
         private bool _isLoginEmpty;
         public bool IsLoginEmpty
         {
             get => _isLoginEmpty;
             set => this.RaiseAndSetIfChanged(ref _isLoginEmpty, value);
         }
-
         private bool _isPasswordEmpty;
         public bool IsPasswordEmpty
         {
             get => _isPasswordEmpty;
             set => this.RaiseAndSetIfChanged(ref _isPasswordEmpty, value);
         }
-
         private bool _isConfirmPasswordEmpty;
         public bool IsConfirmPasswordEmpty
         {
@@ -76,7 +68,7 @@ namespace AppFin_Program.ViewModels.StartViewModels
             get => _isEmailEmpty;
             set => this.RaiseAndSetIfChanged(ref _isEmailEmpty, value);
         }
-
+        public RegistrationViewModel(){}
         public RegistrationViewModel(Action<string> navigateTo)
         {
             _dbContext = new FinAppDataBaseContext();
@@ -132,11 +124,6 @@ namespace AppFin_Program.ViewModels.StartViewModels
             });
 
             CancelCommand = ReactiveCommand.Create(() => navigateTo("authorization"));
-        }
-
-        public RegistrationViewModel()
-        {
-            throw new NotImplementedException();
         }
     }
 }
