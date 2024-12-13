@@ -1,6 +1,5 @@
 ﻿using AppFin_Program.Models;
 using AppFin_Program.ViewModels.MainViewModels;
-using Avalonia.Controls;
 using DynamicData;
 using LiveChartsCore;
 using LiveChartsCore.SkiaSharpView;
@@ -25,22 +24,22 @@ namespace AppFin_Program.ViewModels.WindowViewModels
         public ReactiveCommand<Unit, int> AddNoteCommand { get; }
         public ReactiveCommand<Unit, int> CancelAddNoteCommand { get; }
         public ReactiveCommand<Unit, Unit> ConfirmAddNoteCommand { get; }
-
+        public ReactiveCommand<Unit, Unit> ReportCommand { get; }
         public ObservableCollection<Transaction> IncomeTransactions { get; } = new();
         public ObservableCollection<Transaction> ExpenseTransactions { get; } = new();
         public ObservableCollection<ISeries> IncomeSeries { get; } = new();
         public ObservableCollection<ISeries> ExpenseSeries { get; } = new();
-        public ObservableCollection<Category> Categories { get; }
         public ObservableCollection<TransactionDisplayModel> TransactionList { get; } = new();
+        public ObservableCollection<Category> Categories { get; }
         public ObservableCollection<TransactionType> Types { get; }
         public Category? SelectedCategory { get; set; }
         public TransactionType? SelectedTypes { get; set; }
         public string NewIncomeAmount { get; set; } = "0";
         public DateTimeOffset? SelectedDate { get; set; } = DateTimeOffset.Now;
-        public bool IsToday { get; set; }
 
         public class TransactionDisplayModel
         {
+            public int Id { get; set; }
             public required string CategoryName { get; set; }
             public decimal Amount { get; set; }
             public DateTimeOffset TransactionDate { get; set; }
@@ -93,20 +92,16 @@ namespace AppFin_Program.ViewModels.WindowViewModels
             AddNoteCommand = ReactiveCommand.Create(() => SelectedTabIndex = 2);
             CancelAddNoteCommand = ReactiveCommand.Create(() => SelectedTabIndex = 0);
             ConfirmAddNoteCommand = ReactiveCommand.Create(AddNote);
+            ReportCommand = ReactiveCommand.Create(() => navigateTo("report"));
 
-            LoadTransactions();
-           
+            LoadPieTransactions();
         }
-
-
         private void AddNote()
-        {
-             
+        {             
             if (!ValidateAddNote())
             {
                 return;
             }
-
             try
             {
                 using (var transaction = _dbContext.Database.BeginTransaction())
@@ -139,7 +134,7 @@ namespace AppFin_Program.ViewModels.WindowViewModels
                 }
 
                 SelectedTabIndex = 0;
-                LoadTransactions();
+                LoadPieTransactions();
             }
             catch (Exception ex)
             {
@@ -167,7 +162,7 @@ namespace AppFin_Program.ViewModels.WindowViewModels
 
             return true;
         }
-        private void LoadTransactions()
+        private void LoadPieTransactions()
         {
             try
             {
@@ -263,6 +258,7 @@ namespace AppFin_Program.ViewModels.WindowViewModels
             {
                 TransactionList.Add(new TransactionDisplayModel
                 {
+                    Id = transaction.Id,
                     CategoryName = transaction.TransactionCategories.Category.Name,
                     Amount = transaction.Amount,
                     TransactionDate = transaction.TransactionDate.Date

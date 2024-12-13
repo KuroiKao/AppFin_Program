@@ -2,15 +2,64 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             mc:Ignorable="d" d:DesignWidth="700" d:DesignHeight="400"
              x:Class="AppFin_Program.Views.WindowViews.ReportView"
              xmlns:vm="using:AppFin_Program.ViewModels.WindowViewModels"
              x:DataType="vm:ReportViewModel"
-             x:CompileBindings="True">
-    <Design.DataContext>
-        <vm:ReportViewModel/>
-    </Design.DataContext>
-    <StackPanel>
-        <TextBlock Text="{Binding Greeteng}"/>
-    </StackPanel>
+			 Width="700" Height="400">
+	<Design.DataContext>
+		<vm:ReportViewModel/>
+	</Design.DataContext>
+	<Grid RowDefinitions="50,*,30">
+		<Button Content="Вернуться" Command="{Binding ReturnCommand}"
+				Grid.Row="0" Margin="10"/>
+		<TabControl SelectedIndex="{Binding SelectedTabIndex}" Grid.Row="1">
+			<TabItem Header="Отчеты">
+				<StackPanel>
+					<TextBlock/>
+					<DataGrid ItemsSource="{Binding Reports}" SelectedItem="{Binding SelectedReport}" Height="250"
+						  IsReadOnly="True"
+						  CanUserReorderColumns="True" CanUserResizeColumns="True" CanUserSortColumns="True"
+						  GridLinesVisibility="All"
+						  BorderThickness="1" BorderBrush="Gray">
+						<DataGrid.Columns>
+							<DataGridTextColumn Width="60" Header="№" Binding="{Binding Id}"/>
+							<DataGridTextColumn Width="*" Header="Дата создания" Binding="{Binding CreatedAt}"/>
+						</DataGrid.Columns>
+						<DataGrid.ContextMenu>
+							<ContextMenu>
+								<MenuItem Header="Открыть" Command="{Binding MenuItem_Click_Open}" />
+								<MenuItem Header="Удалить" Command="{Binding MenuItem_Click_Delete}"/>
+							</ContextMenu>
+						</DataGrid.ContextMenu>
+					</DataGrid>
+				</StackPanel>
+			</TabItem>
+			<TabItem Header="Создание отчета">
+				<Grid VerticalAlignment="Center" HorizontalAlignment="Center">
+					<StackPanel Orientation="Vertical" Margin="10">
+						<TextBlock Text="Выберите интервал дат:" />
+						<StackPanel Orientation="Horizontal">
+							<DatePicker  SelectedDate="{Binding StartDate}"/>
+							<TextBlock Text=" — " VerticalAlignment="Center" />
+							<DatePicker  SelectedDate="{Binding EndDate}"/>
+						</StackPanel>
+
+						<TextBlock Text="Что включить в отчет:" Margin="0,10,0,0" />
+						<CheckBox Content="Расход"  IsChecked="{Binding IncludeExpenses}"/>
+						<CheckBox Content="Доход"  IsChecked="{Binding IncludeIncomes}"/>
+
+						<StackPanel Orientation="Horizontal">
+							<Button Content="Сформировать отчет" Margin="0,10,10,0"
+									Command="{Binding GenerateReportCommand}"/>
+						</StackPanel>
+						<Button Content="Отмена" Margin="0,10,0,0"/>
+					</StackPanel>
+				</Grid>
+			</TabItem>
+		</TabControl>
+
+		<TextBlock Text="{Binding StatusMessage}" Foreground="Red" Background="AliceBlue"
+				   Grid.Row="2" Margin="5"/>
+	</Grid>		
 </UserControl>

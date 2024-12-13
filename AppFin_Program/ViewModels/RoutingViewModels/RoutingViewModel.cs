@@ -29,7 +29,7 @@ namespace AppFin_Program.ViewModels.RoutingViewModels
             { "authorization", () => new AuthorizationViewModel(sessionService, NavigateTo) },
             { "registration", () => new RegistrationViewModel(NavigateTo) },
             { "home", () => new HomeViewModel(dbContext: new FinAppDataBaseContext(),sessionService, NavigateTo) },
-            { "report", () => new ReportViewModel(dbContext: new FinAppDataBaseContext(), sessionService)} 
+            { "report", () => new ReportViewModel(dbContext: new FinAppDataBaseContext(), sessionService, NavigateTo)} 
         };
             NavigateTo("authorization");
         }

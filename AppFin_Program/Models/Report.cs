@@ -9,15 +9,9 @@ public partial class Report
 
     public int UserId { get; set; }
 
-    public DateTimeOffset StartDate { get; set; }
+    public DateTimeOffset CreatedAt { get; set; }
 
-    public DateTimeOffset EndDate { get; set; }
-
-    public DateTimeOffset ReportDate { get; set; }
-
-    public decimal Income { get; set; }
-
-    public decimal Expense { get; set; }
+    public string FilePath { get; set; }
 
     public virtual User User { get; set; } = null!;
 }

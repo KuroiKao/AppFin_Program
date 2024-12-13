@@ -7,6 +7,7 @@
     x:Class="AppFin_Program.Views.WindowViews.HomeView"
     xmlns:lvc="using:LiveChartsCore.SkiaSharpView.Avalonia"
     xmlns:vm="using:AppFin_Program.ViewModels.WindowViewModels"
+	xmlns:Events="clr-namespace:Avalonia.ReactiveUI;assembly=Avalonia.ReactiveUI"
     x:DataType="vm:HomeViewModel"
 	Height="600" Width="800">
 	<Design.DataContext>
@@ -15,7 +16,7 @@
 	<DockPanel>
 		<StackPanel Orientation="Horizontal" DockPanel.Dock="Top" Margin="10" Spacing="10" >
 			<Button Content="Добавить запись" Command="{Binding AddNoteCommand}"/>
-			<Button Content="Отчеты"/>
+			<Button Content="Отчеты" Command="{Binding ReportCommand}"/>
 		</StackPanel>
 		<TabControl SelectedIndex="{Binding SelectedTabIndex}" >
 			<TabItem Header="Доходы">
@@ -24,19 +25,16 @@
 								  VerticalAlignment="Center" HorizontalAlignment="Center"
 								  Grid.Column="0"/>
 
-					<DataGrid Margin="20" ItemsSource="{Binding TransactionList} "
-							  Width="400"
-							  IsReadOnly="False"
-							  CanUserReorderColumns="True"
-							  CanUserResizeColumns="True"
-							  CanUserSortColumns="True"
+					<DataGrid Margin="20" ItemsSource="{Binding TransactionList}"
+							  Width="400" AutoGenerateColumns="False"
+							  CanUserReorderColumns="True" CanUserResizeColumns="True" CanUserSortColumns="True"
 							  GridLinesVisibility="All"
 							  BorderThickness="1" BorderBrush="Gray"
 							  Grid.Column="1" HorizontalAlignment="Right">
 						<DataGrid.Columns>
-							<DataGridTextColumn Width="*" Header="Категория" Binding="{Binding CategoryName}"/>
-							<DataGridTextColumn Width="*" Header="Сумма" Binding="{Binding Amount}"/>
-							<DataGridTextColumn Width="*" Header="Дата" Binding="{Binding TransactionDate, StringFormat='dd.MM.yyyy'}"/>
+							<DataGridTextColumn Width="*" IsReadOnly="True" Header="Категория" Binding="{Binding CategoryName}"/>
+							<DataGridTextColumn Width="*" Header="Сумма" Binding="{Binding Amount, Mode=TwoWay}"/>
+							<DataGridTextColumn Width="*" Header="Дата" Binding="{Binding TransactionDate, Mode=TwoWay, StringFormat='dd.MM.yyyy'}"/>
 						</DataGrid.Columns>
 					</DataGrid>
 
@@ -62,7 +60,7 @@
 							  BorderThickness="1" BorderBrush="Gray"
 							  Grid.Column="1" HorizontalAlignment="Right">
 						<DataGrid.Columns>
-							<DataGridTextColumn Width="*" Header="Категория" Binding="{Binding CategoryName}"/>
+							<DataGridTextColumn Width="*" IsReadOnly="True" Header="Категория" Binding="{Binding CategoryName}"/>
 							<DataGridTextColumn Width="*" Header="Сумма" Binding="{Binding Amount}"/>
 							<DataGridTextColumn Width="*" Header="Дата" Binding="{Binding TransactionDate, StringFormat='dd.MM.yyyy'}"/>
 						</DataGrid.Columns>

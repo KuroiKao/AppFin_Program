@@ -61,8 +61,6 @@ public partial class FinAppDataBaseContext : DbContext
             entity.HasIndex(e => e.UserId, "IX_Reports_UserId");
 
             entity.Property(e => e.Id).ValueGeneratedOnAdd();
-            entity.Property(e => e.Expense).HasColumnType("decimal(18, 2)");
-            entity.Property(e => e.Income).HasColumnType("decimal(18, 2)");
 
             entity.HasOne(d => d.User).WithMany(p => p.Reports).HasForeignKey(d => d.UserId);
         });
