@@ -1,6 +1,7 @@
 using AppFin_Program.Models;
 using AppFin_Program.Services;
 using AppFin_Program.ViewModels.MainViewModels;
+using Avalonia.Collections;
 using DynamicData;
 using PdfSharp;
 using PdfSharp.Drawing;
@@ -27,10 +28,30 @@ public class ReportViewModel : ViewModelBase, RoutingViewModels.IRoutableViewMod
     private readonly TransactionService _transactionService;
     private readonly ReportService _reportService;
     public ObservableCollection<Report> Reports { get; } = new();
-    public DateTimeOffset? StartDate { get; set; }
-    public DateTimeOffset? EndDate { get; set; }
-    public bool IncludeExpenses { get; set; }
-    public bool IncludeIncomes { get; set; }
+    private DateTimeOffset? _startDate; 
+    public DateTimeOffset? StartDate
+    {
+        get => _startDate;
+        set => this.RaiseAndSetIfChanged(ref _startDate, value);
+    }
+    private DateTimeOffset? _endDate;
+    public DateTimeOffset? EndDate
+    {
+        get => _endDate;
+        set => this.RaiseAndSetIfChanged(ref _endDate, value);
+    }
+    private bool _includeExpenses;
+    public bool IncludeExpenses
+    {
+        get => _includeExpenses;
+        set => this.RaiseAndSetIfChanged(ref _includeExpenses, value);
+    }
+    private bool _includeIncomes;
+    public bool IncludeIncomes
+    {
+        get => _includeIncomes;
+        set => this.RaiseAndSetIfChanged(ref _includeIncomes, value);
+    }
 
     private string _statusMessage;
     public string StatusMessage
@@ -126,6 +147,7 @@ public class ReportViewModel : ViewModelBase, RoutingViewModels.IRoutableViewMod
 
             StatusMessage = "Отчет успешно сформирован.";
             await LoadDataGridReportsAsync();
+            ResetReportParameters();
             SelectedTabIndex = 0;
         }
         catch (Exception ex)
@@ -133,6 +155,15 @@ public class ReportViewModel : ViewModelBase, RoutingViewModels.IRoutableViewMod
             StatusMessage = $"Ошибка при генерации отчета: {ex.Message}";
         }
     }
+
+    private void ResetReportParameters()
+    {
+        StartDate = null;
+        EndDate = null;
+        IncludeExpenses = false;
+        IncludeIncomes = false;
+    }
+
     private async void ContextMenuSelect_Delete()
     {
         if (SelectedReport == null || string.IsNullOrWhiteSpace(SelectedReport.FilePath))

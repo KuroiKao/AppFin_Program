@@ -1,15 +1,14 @@
 ﻿using AppFin_Program.Models;
 using Microsoft.EntityFrameworkCore;
-using PdfSharp.Drawing;
 using PdfSharp;
+using PdfSharp.Drawing;
+using PdfSharp.Pdf;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using PdfSharp.Pdf;
 using System.IO;
+using System.Linq;
 using System.Reflection;
-using System.Text;
+using System.Threading.Tasks;
 
 namespace AppFin_Program.Services
 {
@@ -87,30 +86,56 @@ namespace AppFin_Program.Services
                 page.Size = PageSize.A4;
                 var graphics = XGraphics.FromPdfPage(page);
 
+
                 var font = new XFont("Times New Roman", 16);
                 graphics.DrawString("Отчет о транзакциях", font, XBrushes.Black,
-                    new XRect(0, 0, page.Width, 50), XStringFormats.TopCenter);
+                    new XRect(20, 20, page.Width, 50), XStringFormats.TopLeft);
 
-                int yPosition = 50;
+                var fontHeader = new XFont("Times New Roman", 12, XFontStyleEx.Bold);
+                var fontBody = new XFont("Times New Roman", 10);
+
+                double columnNumb = 20;
+                double columnType = 40;
+                double columnCategory = 150;
+                double columnAmount = 50;
+                double columnDate = 90;
+
+                double startX = 20;
+                double startY = 70;
+                graphics.DrawString("№", fontHeader, XBrushes.Black, startX, startY);
+                graphics.DrawString("Тип", fontHeader, XBrushes.Black, startX + columnNumb, startY);
+                graphics.DrawString("Категория", fontHeader, XBrushes.Black, startX + columnNumb + columnType, startY);
+                graphics.DrawString("Сумма", fontHeader, XBrushes.Black, startX + columnNumb + columnType + columnCategory, startY);
+                graphics.DrawString("Дата", fontHeader, XBrushes.Black, startX + columnNumb + columnType + columnCategory + columnAmount, startY);
+
+                startY += 15;
+
                 int i = 1;
-
                 foreach (var transaction in transactions)
                 {
-                    var text = WrapText($"{i++}. {transaction.TransactionCategories.TransactionType.Name} " +
-                        $"| {transaction.TransactionCategories.Category.Name} " +
-                        $"| {transaction.Amount} " +
-                        $"| {transaction.TransactionDate:dd.MM.yyyy}", 50);
-                    var cleanedText = new string(text.Where(c => !char.IsControl(c) && c != '\uFFFD').ToArray());
+                    graphics.DrawString(i.ToString(), fontBody, XBrushes.Black, startX, startY);
+                    graphics.DrawString(transaction.TransactionCategories.TransactionType.Name, fontBody, XBrushes.Black, startX + columnNumb, startY);
+                    graphics.DrawString(transaction.TransactionCategories.Category.Name, fontBody, XBrushes.Black, startX + columnNumb + columnType, startY);
+                    graphics.DrawString(transaction.Amount.ToString("F2"), fontBody, XBrushes.Black, startX + columnNumb + columnType + columnCategory, startY);
+                    graphics.DrawString(transaction.TransactionDate.ToString("dd.MM.yyyy"), fontBody, XBrushes.Black, startX + columnNumb + columnType + columnCategory + columnAmount, startY);
 
-                    graphics.DrawString(cleanedText, font, XBrushes.Black, new XRect(20, yPosition, page.Width - 40, 20), XStringFormats.TopLeft);
-                    yPosition += 20;
+                    startY += 20;
 
-                    if (yPosition > page.Height - 50)
+                    if (startY > page.Height - 50)
                     {
                         page = document.AddPage();
                         graphics = XGraphics.FromPdfPage(page);
-                        yPosition = 50;
+                        startY = 50;
+
+                        graphics.DrawString("№", fontHeader, XBrushes.Black, startX, startY);
+                        graphics.DrawString("Тип", fontHeader, XBrushes.Black, startX + columnNumb, startY);
+                        graphics.DrawString("Категория", fontHeader, XBrushes.Black, startX + columnNumb + columnType, startY);
+                        graphics.DrawString("Сумма", fontHeader, XBrushes.Black, startX + columnNumb + columnType + columnCategory, startY);
+                        graphics.DrawString("Дата", fontHeader, XBrushes.Black, startX + columnNumb + columnType + columnCategory + columnAmount, startY);
+
+                        startY += 15;
                     }
+                    i++;
                 }
 
                 await Task.Run(() => document.Save(filePath));
@@ -135,25 +160,25 @@ namespace AppFin_Program.Services
 
             return directoryPath;
         }
-        private static string WrapText(string text, int maxWidth)
-        {
-            var result = new StringBuilder();
-            var words = text.Split(' ');
+        //private static string WrapText(string text, int maxWidth)
+        //{
+        //    var result = new StringBuilder();
+        //    var words = text.Split(' ');
 
-            int currentLineWidth = 0;
-            foreach (var word in words)
-            {
-                if (currentLineWidth + word.Length > maxWidth)
-                {
-                    result.AppendLine();
-                    currentLineWidth = 0;
-                }
+        //    int currentLineWidth = 0;
+        //    foreach (var word in words)
+        //    {
+        //        if (currentLineWidth + word.Length > maxWidth)
+        //        {
+        //            result.AppendLine();
+        //            currentLineWidth = 0;
+        //        }
 
-                result.Append(word + " ");
-                currentLineWidth += word.Length + 1;
-            }
+        //        result.Append(word + " ");
+        //        currentLineWidth += word.Length + 1;
+        //    }
 
-            return result.ToString();
-        }
+        //    return result.ToString();
+        //}
     }
 }

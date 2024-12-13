@@ -40,14 +40,14 @@
 					<StackPanel Orientation="Vertical" Margin="10">
 						<TextBlock Text="Выберите интервал дат:" />
 						<StackPanel Orientation="Horizontal">
-							<DatePicker  SelectedDate="{Binding StartDate}"/>
+							<DatePicker  SelectedDate="{Binding StartDate, Mode=TwoWay}"/>
 							<TextBlock Text=" — " VerticalAlignment="Center" />
-							<DatePicker  SelectedDate="{Binding EndDate}"/>
+							<DatePicker  SelectedDate="{Binding EndDate, Mode=TwoWay}"/>
 						</StackPanel>
 
 						<TextBlock Text="Что включить в отчет:" Margin="0,10,0,0" />
-						<CheckBox Content="Расход"  IsChecked="{Binding IncludeExpenses}"/>
-						<CheckBox Content="Доход"  IsChecked="{Binding IncludeIncomes}"/>
+						<CheckBox Content="Расход"  IsChecked="{Binding IncludeExpenses, Mode=TwoWay}"/>
+						<CheckBox Content="Доход"  IsChecked="{Binding IncludeIncomes, Mode=TwoWay}"/>
 
 						<StackPanel Orientation="Horizontal">
 							<Button Content="Сформировать отчет" Margin="0,10,10,0"
