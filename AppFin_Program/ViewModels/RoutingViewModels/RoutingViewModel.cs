@@ -1,11 +1,11 @@
-﻿using AppFin_Program.ViewModels.MainViewModels;
-using ReactiveUI;
-using System.Collections.Generic;
-using System;
-using AppFin_Program.Models;
+﻿using AppFin_Program.Models;
+using AppFin_Program.Services;
+using AppFin_Program.ViewModels.MainViewModels;
 using AppFin_Program.ViewModels.StartViewModels;
 using AppFin_Program.ViewModels.WindowViewModels;
-using static AppFin_Program.ViewModels.StartViewModels.AuthorizationViewModel;
+using ReactiveUI;
+using System;
+using System.Collections.Generic;
 
 namespace AppFin_Program.ViewModels.RoutingViewModels
 {
@@ -22,14 +22,20 @@ namespace AppFin_Program.ViewModels.RoutingViewModels
 
         public RoutingViewModel()
         {
-            var sessionService = new SessionService();
+            var dbcontext = new FinAppDataBaseContext();
+            var userSessionService = new UserSessionService();
+            var trasnactionService = new TransactionService(dbcontext, userSessionService);
+            var categoryService = new CategoryService(dbcontext);
+            var authenticationService = new AuthenticationService(dbcontext);
+            var userService = new UserService(dbcontext);
+            var reportService = new ReportService(dbcontext, userSessionService);
 
             _routes = new Dictionary<string, Func<IRoutableViewModel>>
-        {
-            { "authorization", () => new AuthorizationViewModel(sessionService, NavigateTo) },
-            { "registration", () => new RegistrationViewModel(NavigateTo) },
-            { "home", () => new HomeViewModel(dbContext: new FinAppDataBaseContext(),sessionService, NavigateTo) },
-            { "report", () => new ReportViewModel(dbContext: new FinAppDataBaseContext(), sessionService, NavigateTo)} 
+            {
+            { "authorization", () => new AuthorizationViewModel(authenticationService, userSessionService, NavigateTo) },
+            { "registration", () => new RegistrationViewModel(userService, NavigateTo) },
+            { "home", () => new HomeViewModel(trasnactionService, userSessionService, categoryService, NavigateTo) },
+            { "report", () => new ReportViewModel(userSessionService, trasnactionService, reportService, NavigateTo)} 
         };
             NavigateTo("authorization");
         }

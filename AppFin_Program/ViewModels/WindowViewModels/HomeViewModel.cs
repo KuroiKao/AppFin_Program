@@ -1,35 +1,33 @@
 ﻿using AppFin_Program.Models;
+using AppFin_Program.Services;
 using AppFin_Program.ViewModels.MainViewModels;
 using DynamicData;
 using LiveChartsCore;
 using LiveChartsCore.SkiaSharpView;
-using Microsoft.EntityFrameworkCore;
 using ReactiveUI;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Diagnostics;
 using System.Linq;
 using System.Reactive;
-using static AppFin_Program.ViewModels.StartViewModels.AuthorizationViewModel;
 
 namespace AppFin_Program.ViewModels.WindowViewModels
 {
     public class HomeViewModel : ViewModelBase, RoutingViewModels.IRoutableViewModel
     {
         public string RouteKey => "home";
-        private readonly FinAppDataBaseContext _dbContext;
-        private readonly SessionService _sessionService;
+        private readonly TransactionService _transactionService;
+        private readonly CategoryService _categoryService;
+        private readonly UserSessionService _userSessionService;
 
         public ReactiveCommand<Unit, int> AddNoteCommand { get; }
         public ReactiveCommand<Unit, int> CancelAddNoteCommand { get; }
         public ReactiveCommand<Unit, Unit> ConfirmAddNoteCommand { get; }
         public ReactiveCommand<Unit, Unit> ReportCommand { get; }
-        public ObservableCollection<Transaction> IncomeTransactions { get; } = new();
-        public ObservableCollection<Transaction> ExpenseTransactions { get; } = new();
+
+        public ObservableCollection<TransactionDisplayModel> TransactionList { get; } = new();
         public ObservableCollection<ISeries> IncomeSeries { get; } = new();
         public ObservableCollection<ISeries> ExpenseSeries { get; } = new();
-        public ObservableCollection<TransactionDisplayModel> TransactionList { get; } = new();
         public ObservableCollection<Category> Categories { get; }
         public ObservableCollection<TransactionType> Types { get; }
         public Category? SelectedCategory { get; set; }
@@ -37,25 +35,20 @@ namespace AppFin_Program.ViewModels.WindowViewModels
         public string NewIncomeAmount { get; set; } = "0";
         public DateTimeOffset? SelectedDate { get; set; } = DateTimeOffset.Now;
 
-        public class TransactionDisplayModel
-        {
-            public int Id { get; set; }
-            public required string CategoryName { get; set; }
-            public decimal Amount { get; set; }
-            public DateTimeOffset TransactionDate { get; set; }
-        }
         private bool _isExpenseEmpty;
         public bool IsExpenseEmpty
         {
             get => _isExpenseEmpty;
             private set => this.RaiseAndSetIfChanged(ref _isExpenseEmpty, value);
         }
+
         private bool _isIncomeEmpty;
         public bool IsIncomeEmpty
         {
             get => _isIncomeEmpty;
             private set => this.RaiseAndSetIfChanged(ref _isIncomeEmpty, value);
         }
+
         private int _selectedTabIndex;
         public int SelectedTabIndex
         {
@@ -66,6 +59,7 @@ namespace AppFin_Program.ViewModels.WindowViewModels
                 LoadDataGrid();
             }
         }
+
         private string _statusMessage;
         public string StatusMessage
         {
@@ -76,18 +70,14 @@ namespace AppFin_Program.ViewModels.WindowViewModels
         {
 
         }
-        public HomeViewModel(FinAppDataBaseContext dbContext, SessionService sessionService, Action<string> navigateTo)
+        public HomeViewModel(TransactionService transactionService, UserSessionService userSessionService, CategoryService categoryService, Action<string> navigateTo)
         {
-            _dbContext = dbContext;
-            _sessionService = sessionService;
-            if (_sessionService.CurrentUser != null)
-                Debug.WriteLine($"Id current user: {_sessionService.CurrentUser.Id}");
+            _transactionService = transactionService;
+            _userSessionService = userSessionService;
+            _categoryService = categoryService;
 
-
-            Categories = new ObservableCollection<Category>(_dbContext.Categories.ToList());
-            Types = new ObservableCollection<TransactionType>(_dbContext.TransactionTypes.ToList());
-            IncomeSeries = new ObservableCollection<ISeries>();
-            ExpenseSeries = new ObservableCollection<ISeries>();
+            Categories = new ObservableCollection<Category>(_categoryService.GetCategories());
+            Types = new ObservableCollection<TransactionType>(_categoryService.GetTransactionTypes());
 
             AddNoteCommand = ReactiveCommand.Create(() => SelectedTabIndex = 2);
             CancelAddNoteCommand = ReactiveCommand.Create(() => SelectedTabIndex = 0);
@@ -104,41 +94,13 @@ namespace AppFin_Program.ViewModels.WindowViewModels
             }
             try
             {
-                using (var transaction = _dbContext.Database.BeginTransaction())
-                {
-                    if (SelectedCategory != null || SelectedTypes != null)
-                    {
-                        var transactionCategory = new TransactionCategory
-                        {
-                            CategoryId = SelectedCategory!.Id,
-                            TransactionTypeId = SelectedTypes!.Id
-                        };
-
-                        _dbContext.TransactionCategories.Add(transactionCategory);
-                        _dbContext.SaveChanges();
-
-                        var transactionRecord = new Transaction
-                        {
-                            UserId = _sessionService.CurrentUser!.Id,
-                            Amount = decimal.Parse(NewIncomeAmount),
-                            TransactionDate = SelectedDate ?? DateTimeOffset.Now,
-                            TransactionCategoriesId = transactionCategory.Id,
-                        };
-
-                        _dbContext.Transactions.Add(transactionRecord);
-                    }
-
-                    _dbContext.SaveChanges();
-
-                    transaction.Commit();
-                }
-
+                _transactionService.AddTransaction(SelectedCategory!, SelectedTypes!, decimal.Parse(NewIncomeAmount), SelectedDate);
                 SelectedTabIndex = 0;
                 LoadPieTransactions();
             }
             catch (Exception ex)
             {
-                StatusMessage = $"Error adding note: {ex.Message}";
+                StatusMessage = $"Ошибка добавления записи: {ex.Message}";
             }
         }
         private bool ValidateAddNote()
@@ -148,7 +110,11 @@ namespace AppFin_Program.ViewModels.WindowViewModels
                 StatusMessage = "Не выбрана категория";
                 return false;
             }
-
+            if (SelectedTypes == null)
+            {
+                StatusMessage = "Не выбран тип транзакции";
+                return false;
+            }
             if (!decimal.TryParse(NewIncomeAmount, out var amount) || amount <= 0)
             {
                 StatusMessage = "Не выбрана сумма или сумма некорректна";
@@ -166,73 +132,46 @@ namespace AppFin_Program.ViewModels.WindowViewModels
         {
             try
             {
-                var transactions = _dbContext.Transactions
-                    .Include(t => t.TransactionCategories.TransactionType)
-                    .Include(t => t.TransactionCategories.Category)
-                    .Where(t => t.UserId == _sessionService.CurrentUser!.Id)
+                var userId = _userSessionService.GetCurrentUserId();
+                var transactions = _transactionService.LoadTransactions();
+                var incomeType = _categoryService.GetIncomeTransactionType();
+                var expenseType = _categoryService.GetExpenseTransactionType();
+
+                var incomeTransactions = transactions
+                    .Where(t => t.TransactionCategories.TransactionType.Id == incomeType.Id)
                     .ToList();
 
-                ProcessTransactionsByType(transactions, "Доход");
-                IncomeTransactions.Clear();
-                IncomeTransactions.AddRange(transactions.Where(t => t.TransactionCategories.TransactionType.Name == "Доход"));
+                var expenseTransactions = transactions
+                    .Where(t => t.TransactionCategories.TransactionType.Id == expenseType.Id)
+                    .ToList();
 
-                ProcessTransactionsByType(transactions, "Расход");
-                ExpenseTransactions.Clear();
-                ExpenseTransactions.AddRange(transactions.Where(t => t.TransactionCategories.TransactionType.Name == "Расход"));
+                IsIncomeEmpty = incomeTransactions.Count == 0;
+                IsExpenseEmpty = expenseTransactions.Count == 0;
 
-                LoadDataGrid();
+                IncomeSeries.Clear();
+                ExpenseSeries.Clear();
+                AddSeriesToCollection(IncomeSeries, incomeTransactions);
+                AddSeriesToCollection(ExpenseSeries, expenseTransactions);
+
+                TransactionList.Clear();
+                TransactionList.AddRange(_transactionService.GetTransactionDisplayModels(transactions));
             }
             catch (Exception ex)
             {
-                StatusMessage = $"Error loading transactions: {ex.Message}";
-            }
-        }
-        private void ProcessTransactionsByType(List<Transaction> transactions, string transactionType)
-        {
-            var filteredTransactions = transactions
-                .Where(t => t.TransactionCategories.TransactionType.Name == transactionType)
-                .ToList();
-
-            bool isTypeEmpty = filteredTransactions.Count == 0;
-
-            if (transactionType == "Доход")
-            {
-                IsIncomeEmpty = isTypeEmpty;
-                IncomeSeries.Clear();
-                if (!isTypeEmpty)
-                {
-                    AddSeriesToCollection(IncomeSeries, filteredTransactions);
-                }
-                else
-                {
-                    StatusMessage = "No income transactions found.";
-                }
-            }
-            else if (transactionType == "Расход")
-            {
-                IsExpenseEmpty = isTypeEmpty;
-                ExpenseSeries.Clear();
-                if (!isTypeEmpty)
-                {
-                    AddSeriesToCollection(ExpenseSeries, filteredTransactions);
-                }
-                else
-                {
-                    StatusMessage = "No expense transactions found.";
-                }
+                StatusMessage = $"Ошибка загрузки транзакции: {ex.Message}";
             }
         }
         private static void AddSeriesToCollection(ObservableCollection<ISeries> seriesCollection, List<Transaction> transactions)
         {
-            seriesCollection.AddRange(
-                transactions.SelectMany(t => t.TransactionCategories.Transactions)
-                           .GroupBy(tc => tc.TransactionCategories.Category.Name)
-                           .Select(g => new PieSeries<decimal>
-                           {
-                               Name = g.Key,
-                               Values = new[] { g.Sum(tc => tc.Amount) }
-                           })
-            );
+            foreach (var group in transactions.SelectMany(t => t.TransactionCategories.Transactions)
+                                               .GroupBy(tc => tc.TransactionCategories.Category.Name))
+            {
+                seriesCollection.Add(new PieSeries<decimal>
+                {
+                    Name = group.Key,
+                    Values = new[] { group.Sum(tc => tc.Amount) }
+                });
+            }
         }
         private void LoadDataGrid()
         {
@@ -245,24 +184,26 @@ namespace AppFin_Program.ViewModels.WindowViewModels
         }
         private void LoadDataGridByType(string transactionType)
         {
-            var transactions = _dbContext.Transactions
-                .Include(t => t.TransactionCategories)
-                .ThenInclude(tc => tc.Category)
-                .Where(t => t.UserId == _sessionService.CurrentUser!.Id)
-                .Where(t => t.TransactionCategories.TransactionType.Name == transactionType)
-                .ToList();
-
-            TransactionList.Clear();
-
-            foreach (var transaction in transactions)
+            try
             {
-                TransactionList.Add(new TransactionDisplayModel
+                var transactionTypeObj = transactionType == "Доход" ?
+                                  _categoryService.GetIncomeTransactionType() :
+                                  _categoryService.GetExpenseTransactionType();
+                var transactions = _transactionService.LoadTransactions()
+                    .Where(t => t.TransactionCategories.TransactionType.Id == transactionTypeObj.Id)
+                    .ToList();
+
+                TransactionList.Clear();
+
+                var transactionDisplayModels = _transactionService.GetTransactionDisplayModels(transactions);
+                foreach (var transactionDisplayModel in transactionDisplayModels)
                 {
-                    Id = transaction.Id,
-                    CategoryName = transaction.TransactionCategories.Category.Name,
-                    Amount = transaction.Amount,
-                    TransactionDate = transaction.TransactionDate.Date
-                });
+                    TransactionList.Add(transactionDisplayModel);
+                }
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"Ошибка загрузки данных: {ex.Message}";
             }
         }
     }

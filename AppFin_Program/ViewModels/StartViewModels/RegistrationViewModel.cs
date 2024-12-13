@@ -1,6 +1,5 @@
-﻿using AppFin_Program.Models;
+﻿using AppFin_Program.Services;
 using AppFin_Program.ViewModels.MainViewModels;
-using Microsoft.EntityFrameworkCore;
 using ReactiveUI;
 using System;
 using System.Reactive;
@@ -11,7 +10,7 @@ namespace AppFin_Program.ViewModels.StartViewModels
     public class RegistrationViewModel : ViewModelBase, RoutingViewModels.IRoutableViewModel
     {
         public string RouteKey => "registration";
-        private readonly FinAppDataBaseContext _dbContext;
+        private readonly UserService _userService;
         public ReactiveCommand<Unit, Unit> RegisterCommand { get; }
         public ReactiveCommand<Unit, Unit> CancelCommand { get; }
         private string _login;
@@ -44,80 +43,40 @@ namespace AppFin_Program.ViewModels.StartViewModels
             get => _statusMessage;
             set => this.RaiseAndSetIfChanged(ref _statusMessage, value);
         }
-        private bool _isLoginEmpty;
-        public bool IsLoginEmpty
+        public RegistrationViewModel()
         {
-            get => _isLoginEmpty;
-            set => this.RaiseAndSetIfChanged(ref _isLoginEmpty, value);
+
         }
-        private bool _isPasswordEmpty;
-        public bool IsPasswordEmpty
+        public RegistrationViewModel(UserService userService, Action<string> navigateTo)
         {
-            get => _isPasswordEmpty;
-            set => this.RaiseAndSetIfChanged(ref _isPasswordEmpty, value);
-        }
-        private bool _isConfirmPasswordEmpty;
-        public bool IsConfirmPasswordEmpty
-        {
-            get => _isConfirmPasswordEmpty;
-            set => this.RaiseAndSetIfChanged(ref _isConfirmPasswordEmpty, value);
-        }
-        private bool _isEmailEmpty;
-        public bool IsEmailEmpty
-        {
-            get => _isEmailEmpty;
-            set => this.RaiseAndSetIfChanged(ref _isEmailEmpty, value);
-        }
-        public RegistrationViewModel(){}
-        public RegistrationViewModel(Action<string> navigateTo)
-        {
-            _dbContext = new FinAppDataBaseContext();
+            _userService = userService;
 
             RegisterCommand = ReactiveCommand.CreateFromTask(async () =>
             {
-                IsLoginEmpty = string.IsNullOrWhiteSpace(Login);
-                IsPasswordEmpty = string.IsNullOrWhiteSpace(Password);
-                IsConfirmPasswordEmpty = string.IsNullOrWhiteSpace(ConfirmPassword);
-                IsEmailEmpty = string.IsNullOrWhiteSpace(Email);
-
-                if (IsLoginEmpty || IsPasswordEmpty || IsConfirmPasswordEmpty)
+                if (string.IsNullOrWhiteSpace(Login) || string.IsNullOrWhiteSpace(Password) || string.IsNullOrWhiteSpace(ConfirmPassword))
                 {
-                    StatusMessage = "Login, Password, or Confirm Password cannot be empty.";
+                    StatusMessage = "Ошибка! Логин, Пароль или Подтверждение пароля не могут быть пустыми.";
                     return;
                 }
 
-                var existingUser = await _dbContext.Users.FirstOrDefaultAsync(u => u.Login == Login);
+                var existingUser = await _userService.GetUserByLoginAsync(Login);
+
                 if (existingUser != null)
                 {
-                    StatusMessage = "Login already exists.";
+                    StatusMessage = "Логин уже существует.";
                     return;
                 }
-
                 if (Password != ConfirmPassword)
                 {
-                    StatusMessage = "Passwords do not match.";
+                    StatusMessage = "Пароли не совпадают.";
                     return;
                 }
-
-                if (IsEmailEmpty)
+                if (!string.IsNullOrWhiteSpace(Email) && !Email.Contains('@'))
                 {
+                    StatusMessage = "Неверный адрес электронной почты.";
                     return;
                 }
-                else if (!Email.Contains("@mail.ru" + "gmail.com"))
-                {
-                    StatusMessage = "Not a valid E-Mail-Address";
-                    return;
-                }
-
-                var newUser = new User
-                {
-                    Login = Login,
-                    Password = Password,
-                    Email = Email
-                };
-
-                _dbContext.Users.Add(newUser);
-                await _dbContext.SaveChangesAsync();
+                await _userService.RegisterUserAsync(Login, Password, Email);
                 StatusMessage = "Registration successful!";
                 await Task.Delay(1000);
                 navigateTo("authorization");

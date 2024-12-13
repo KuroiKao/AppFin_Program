@@ -1,18 +1,17 @@
 ﻿using AppFin_Program.Models;
+using AppFin_Program.Services;
 using AppFin_Program.ViewModels.MainViewModels;
-using Microsoft.EntityFrameworkCore;
 using ReactiveUI;
 using System;
 using System.Reactive;
-using System.Threading.Tasks;
 
 namespace AppFin_Program.ViewModels.StartViewModels
 {
     public class AuthorizationViewModel : ViewModelBase, RoutingViewModels.IRoutableViewModel
     {
         public string RouteKey => "authorization";
-        private readonly FinAppDataBaseContext _dbContext;
-        private readonly SessionService _sessionService;
+        private readonly AuthenticationService _authenticationService;
+        private readonly UserSessionService _userSessionService;
         public ReactiveCommand<Unit, bool> LoginCommand { get; }
         public ReactiveCommand<Unit, Unit> RegistrationCommand { get; }
 
@@ -37,33 +36,29 @@ namespace AppFin_Program.ViewModels.StartViewModels
             set => this.RaiseAndSetIfChanged(ref _statusMessage, value);
         }
 
-        public class SessionService
-        {
-            public User? CurrentUser { get; private set; }
-
-            public void SetCurrentUser(User user)
-            {
-                CurrentUser = user;
-            }
-        }
         public AuthorizationViewModel(){}
-        public AuthorizationViewModel(SessionService sessionService, Action<string> navigateTo)
+        public AuthorizationViewModel(AuthenticationService authenticationService, UserSessionService userSessionService, Action<string> navigateTo)
         {
+            _authenticationService = authenticationService;
+            _userSessionService = userSessionService;
+
             Login = "admin";
             Password = "123456";
 
-            _dbContext = new FinAppDataBaseContext();            
-            _sessionService = sessionService;
-
             LoginCommand = ReactiveCommand.CreateFromTask(async () =>
-            {                
-                if (await AuthenticateUser())
+            {
+                var user = await _authenticationService.AuthenticateAsync(Login, Password);
+
+                if (user != null)
                 {
+                    _userSessionService.SetCurrentUserId(user.Id);
+                    StatusMessage = "Login successful!";
                     navigateTo("home");
                     return true;
                 }
                 else
                 {
+                    StatusMessage = "Invalid login or password.";
                     return false;
                 }
             },
@@ -76,42 +71,6 @@ namespace AppFin_Program.ViewModels.StartViewModels
             {
                 navigateTo("registration");
             });
-        }
-
-        private async Task<bool> AuthenticateUser()
-        {           
-            try
-            {
-                var user = await _dbContext.Users
-                    .FirstOrDefaultAsync(x => x.Login == Login);
-
-                if (user != null)
-                {
-                    if (user.Password == Password)
-                    {
-                        StatusMessage = "Login successful!";
-                        _sessionService.SetCurrentUser(user);
-                        return true;
-                    }
-                    else
-                    {
-                        StatusMessage = "Invalid password.";
-                        return false;
-                    }
-                }
-                else
-                {
-                    System.Diagnostics.Debug.WriteLine($"User not found");
-                    StatusMessage = "User not found.";
-                    return false;
-                }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Error during login: {ex.Message}");
-                StatusMessage = "An error occurred during login.";
-                return false;
-            }
         }
     }
 }
