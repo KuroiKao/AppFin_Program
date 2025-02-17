@@ -7,21 +7,19 @@ using System.Threading.Tasks;
 
 namespace AppFin_Program.Services
 {
-    public class TransactionService
+    public partial class TransactionService : DbContextService
     {
-        private readonly FinAppDataBaseContext _dbContext; 
         private readonly UserSessionService _userSessionService;
-
-
-        public TransactionService(FinAppDataBaseContext dbContext, UserSessionService userSessionService)
+        private readonly BudgetService _budgetService;
+        public TransactionService(IDbContextFactory<FinAppDataBaseContext> dbContextFactory, UserSessionService userSessionService, BudgetService budgetService) : base(dbContextFactory)
         {
-            _dbContext = dbContext;
             _userSessionService = userSessionService;
+            _budgetService = budgetService;
         }
 
-        public void AddTransaction(Category selectedCategory, TransactionType selectedType, decimal amount, DateTimeOffset? selectedDate)
+        public async Task AddTransactionAsync(Category selectedCategory, TransactionType selectedType, decimal amount, DateTimeOffset? selectedDate)
         {
-            using var transaction = _dbContext.Database.BeginTransaction();
+            await using var transaction = await DbContext.Database.BeginTransactionAsync();
 
             try
             {
@@ -31,8 +29,8 @@ namespace AppFin_Program.Services
                     TransactionTypeId = selectedType.Id
                 };
 
-                _dbContext.TransactionCategories.Add(transactionCategory);
-                _dbContext.SaveChanges();
+                await DbContext.TransactionCategories.AddAsync(transactionCategory);
+                await DbContext.SaveChangesAsync();
 
                 var transactionRecord = new Transaction
                 {
@@ -42,11 +40,13 @@ namespace AppFin_Program.Services
                     TransactionCategoriesId = transactionCategory.Id
                 };
 
-                _dbContext.Transactions.Add(transactionRecord);
-                _dbContext.SaveChanges();
+                await DbContext.Transactions.AddAsync(transactionRecord);
+                await DbContext.SaveChangesAsync();
 
-                transaction.Commit();
-                
+                bool isIncome = selectedType.Name == "Доход";
+                await _budgetService.UpdateBudgetAsync(transactionRecord.UserId, amount, isIncome);
+
+                await transaction.CommitAsync();                
             }
             catch (Exception ex)
             {
@@ -55,11 +55,12 @@ namespace AppFin_Program.Services
         }
         public List<Transaction> LoadTransactions()
         {
-            return _dbContext.Transactions
+            return DbContext.Transactions
                 .Include(t => t.TransactionCategories)
                 .ThenInclude(tc => tc.Category)
                 .Where(t => t.UserId == _userSessionService.GetCurrentUserId())
-                .ToList();
+                .OrderByDescending(t => t.TransactionDate)
+                .ToList(); ;
         }
         public List<TransactionDisplayModel> GetTransactionDisplayModels(List<Transaction> transactions)
         {
@@ -73,7 +74,7 @@ namespace AppFin_Program.Services
         }
         public async Task<List<Transaction>> GetTransactionsAsync(DateTimeOffset startDate, DateTimeOffset endDate, bool includeExpenses, bool includeIncomes)
         {
-            var transactionsQuery = _dbContext.Transactions
+            var transactionsQuery = DbContext.Transactions
                 .Include(t => t.TransactionCategories.Category)
                 .Include(t => t.TransactionCategories.TransactionType)
                 .Where(t => t.TransactionDate >= startDate && t.TransactionDate <= endDate);

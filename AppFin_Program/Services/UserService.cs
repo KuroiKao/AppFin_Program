@@ -4,18 +4,12 @@ using System.Threading.Tasks;
 
 namespace AppFin_Program.Services
 {
-    public class UserService
+    public partial class UserService(IDbContextFactory<FinAppDataBaseContext> dbContextFactory) : DbContextService(dbContextFactory)
     {
-        private readonly FinAppDataBaseContext _dbContext;
-
-        public UserService(FinAppDataBaseContext dbContext)
-        {
-            _dbContext = dbContext;
-        }
-
         public async Task<User?> GetUserByLoginAsync(string login)
         {
-            return await _dbContext.Users.FirstOrDefaultAsync(u => u.Login == login);
+            var userByLogin = await DbContext.Users.FirstOrDefaultAsync(u => u.Login == login);
+            return userByLogin;
         }
 
         public async Task RegisterUserAsync(string login, string password, string email)
@@ -27,8 +21,8 @@ namespace AppFin_Program.Services
                 Email = email
             };
 
-            _dbContext.Users.Add(newUser);
-            await _dbContext.SaveChangesAsync();
+            DbContext.Users.Add(newUser);
+            await DbContext.SaveChangesAsync();
         }
     }
 }

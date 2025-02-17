@@ -1,6 +1,6 @@
-﻿using AppFin_Program.ViewModels.RoutingViewModels;
-using ReactiveUI;
-using System.Reactive;
+﻿using AppFin_Program.Models;
+using AppFin_Program.ViewModels.RoutingViewModels;
+using Microsoft.EntityFrameworkCore;
 
 namespace AppFin_Program.ViewModels.MainViewModels
 {
@@ -8,11 +8,11 @@ namespace AppFin_Program.ViewModels.MainViewModels
     {
         public RoutingViewModel CurrentRouter { get; }
 
-        public MainWindowViewModel()
+        public MainWindowViewModel(IDbContextFactory<FinAppDataBaseContext> dbContextFactory)
+        : base(dbContextFactory)
         {
-            var router = new RoutingViewModel();
-
-            CurrentRouter = router;
+            CurrentRouter = new RoutingViewModel(dbContextFactory);
         }
+
     }
 }

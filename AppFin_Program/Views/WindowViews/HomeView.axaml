@@ -1,118 +1,128 @@
-<UserControl
-    xmlns="https://github.com/avaloniaui"
-	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-	xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
-    x:Class="AppFin_Program.Views.WindowViews.HomeView"
-    xmlns:lvc="using:LiveChartsCore.SkiaSharpView.Avalonia"
-    xmlns:vm="using:AppFin_Program.ViewModels.WindowViewModels"
-	xmlns:Events="clr-namespace:Avalonia.ReactiveUI;assembly=Avalonia.ReactiveUI"
-    x:DataType="vm:HomeViewModel"
-	Height="600" Width="800">
+<UserControl x:Class="AppFin_Program.Views.WindowViews.HomeView"
+			 xmlns="https://github.com/avaloniaui"
+			 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+			 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+			 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+			 xmlns:lvc="using:LiveChartsCore.SkiaSharpView.Avalonia"
+			 xmlns:vm="using:AppFin_Program.ViewModels.WindowViewModels"
+			 x:DataType="vm:HomeViewModel" 
+			 mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600">
 	<Design.DataContext>
 		<vm:HomeViewModel/>
 	</Design.DataContext>
 	<DockPanel>
-		<StackPanel Orientation="Horizontal" DockPanel.Dock="Top" Margin="10" Spacing="10" >
-			<Button Content="Добавить запись" Command="{Binding AddNoteCommand}"/>
-			<Button Content="Отчеты" Command="{Binding ReportCommand}"/>
-		</StackPanel>
-		<TabControl SelectedIndex="{Binding SelectedTabIndex}" >
-			<TabItem Header="Доходы">
-				<Grid ColumnDefinitions="350, *">
-					<lvc:PieChart Series="{Binding IncomeSeries}" Width="300" Height="300"
-								  VerticalAlignment="Center" HorizontalAlignment="Center"
-								  Grid.Column="0"/>
+		<Border BorderThickness="2" BorderBrush="Gray" Margin="5" CornerRadius="10" DockPanel.Dock="Top">
+			<Grid Margin="10"
+				  ColumnDefinitions="auto, auto, auto, *, *"
+				  RowDefinitions="*,*" ShowGridLines="False">
+				<TextBlock Text="Ваш бюджет:" FontSize="18" Margin="5,5,0,5"
+						   Grid.Row="0" HorizontalAlignment="Left"/>
+				<TextBlock Text="{Binding Budgets.Amount, TargetNullValue=0}" FontSize="18" Margin="0,5,5,5"
+						   Grid.Row="0" Grid.Column="1"/>
 
-					<DataGrid Margin="20" ItemsSource="{Binding TransactionList}"
-							  Width="400" AutoGenerateColumns="False"
-							  CanUserReorderColumns="True" CanUserResizeColumns="True" CanUserSortColumns="True"
-							  GridLinesVisibility="All"
-							  BorderThickness="1" BorderBrush="Gray"
-							  Grid.Column="1" HorizontalAlignment="Right">
-						<DataGrid.Columns>
-							<DataGridTextColumn Width="*" IsReadOnly="True" Header="Категория" Binding="{Binding CategoryName}"/>
-							<DataGridTextColumn Width="*" Header="Сумма" Binding="{Binding Amount, Mode=TwoWay}"/>
-							<DataGridTextColumn Width="*" Header="Дата" Binding="{Binding TransactionDate, Mode=TwoWay, StringFormat='dd.MM.yyyy'}"/>
-						</DataGrid.Columns>
-					</DataGrid>
+				<Button Content="Добавить запись" Command="{Binding AddTransactionCommand}"
+						Grid.Column="0" Grid.Row="1" Margin="0, 0, 5, 0"/>
+				<Button Content="Отчеты" Command="{Binding NavigateToReportsCommand}"
+						Grid.Column="1" Grid.Row="1" Margin="0, 0, 5, 0"/>
+				<Button Content="Цели" Command="{Binding NavigateToGoalsCommand}"
+						Grid.Column="2" Grid.Row="1" Margin="0, 0, 5, 0"/>
+			</Grid>
+		</Border>
+		<Border BorderThickness="2" BorderBrush="Gray" Margin="5" CornerRadius="10" >
+			<TabControl SelectedIndex="{Binding SelectedTabIndex}" >
+				<TabItem Header="Доходы">
+					<Grid ColumnDefinitions="350, *">
+						<lvc:PieChart Series="{Binding IncomeSeries}" Width="300" Height="300"
+									  VerticalAlignment="Center" HorizontalAlignment="Center"
+									  Grid.Column="0"/>
 
-					<TextBlock Text="Нет данных о доходах"
-								   IsVisible="{Binding IsIncomeEmpty}"
-								   Foreground="Red"
-								   HorizontalAlignment="Center" VerticalAlignment="Center"/>
-				</Grid>
-			</TabItem>
-			<TabItem Header="Расходы">
-				<Grid ColumnDefinitions="350, *">
-					<lvc:PieChart Series="{Binding ExpenseSeries}" Width="300" Height="300"
-								  VerticalAlignment="Center" HorizontalAlignment="Center"
-								  Grid.Column="0"/>
+						<DataGrid Margin="20" ItemsSource="{Binding TransactionList}"
+								  Width="400" AutoGenerateColumns="False"
+								  CanUserReorderColumns="True" CanUserResizeColumns="True" CanUserSortColumns="True"
+								  GridLinesVisibility="All"
+								  BorderThickness="1" BorderBrush="Gray"
+								  Grid.Column="1" HorizontalAlignment="Right">
+							<DataGrid.Columns>
+								<DataGridTextColumn Width="*" IsReadOnly="True" Header="Категория" Binding="{Binding CategoryName}"/>
+								<DataGridTextColumn Width="*" Header="Сумма" Binding="{Binding Amount, Mode=TwoWay}"/>
+								<DataGridTextColumn Width="*" Header="Дата" Binding="{Binding TransactionDate, Mode=TwoWay, StringFormat='dd.MM.yyyy'}"/>
+							</DataGrid.Columns>
+						</DataGrid>
 
-					<DataGrid Margin="20" ItemsSource="{Binding TransactionList} "
-							  Width="400"
-							  IsReadOnly="False"
-							  CanUserReorderColumns="True"
-							  CanUserResizeColumns="True"
-							  CanUserSortColumns="True"
-							  GridLinesVisibility="All"
-							  BorderThickness="1" BorderBrush="Gray"
-							  Grid.Column="1" HorizontalAlignment="Right">
-						<DataGrid.Columns>
-							<DataGridTextColumn Width="*" IsReadOnly="True" Header="Категория" Binding="{Binding CategoryName}"/>
-							<DataGridTextColumn Width="*" Header="Сумма" Binding="{Binding Amount}"/>
-							<DataGridTextColumn Width="*" Header="Дата" Binding="{Binding TransactionDate, StringFormat='dd.MM.yyyy'}"/>
-						</DataGrid.Columns>
-					</DataGrid>
+						<TextBlock Text="Нет данных о доходах"
+									   IsVisible="{Binding IsIncomeEmpty}"
+									   Foreground="Red"
+									   HorizontalAlignment="Center" VerticalAlignment="Center"/>
+					</Grid>
+				</TabItem>
+				<TabItem Header="Расходы">
+					<Grid ColumnDefinitions="350, *">
+						<lvc:PieChart Series="{Binding ExpenseSeries}" Width="300" Height="300"
+									  VerticalAlignment="Center" HorizontalAlignment="Center"
+									  Grid.Column="0"/>
 
-					<TextBlock Text="Нет данных о расходах"
-								   IsVisible="{Binding IsExpenseEmpty}"
-								   Foreground="Red"
-								   HorizontalAlignment="Center" VerticalAlignment="Center"/>
-				</Grid>
-			</TabItem>
-			<TabItem Header="Новая запись" IsVisible="False">
-				<StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-					<StackPanel Width="300">
-						<TextBlock Text="Сумма" FontSize="16" FontWeight="Bold" Margin="0, 10, 0, 5" />
-						<TextBox Watermark="Введите сумму" Text="{Binding NewIncomeAmount}" />
+						<DataGrid Margin="20" ItemsSource="{Binding TransactionList} "
+								  Width="400"
+								  IsReadOnly="False"
+								  CanUserReorderColumns="True" CanUserResizeColumns="True" CanUserSortColumns="True"
+								  GridLinesVisibility="All"
+								  BorderThickness="1" BorderBrush="Gray"
+								  Grid.Column="1" HorizontalAlignment="Right">
+							<DataGrid.Columns>
+								<DataGridTextColumn Width="*" IsReadOnly="True" Header="Категория" Binding="{Binding CategoryName}"/>
+								<DataGridTextColumn Width="*" Header="Сумма" Binding="{Binding Amount, Mode=TwoWay}"/>
+								<DataGridTextColumn Width="*" Header="Дата" Binding="{Binding TransactionDate, Mode=TwoWay, StringFormat='dd.MM.yyyy'}"/>
+							</DataGrid.Columns>
+						</DataGrid>
 
-						<TextBlock Text="Категория" FontSize="16" FontWeight="Bold" Margin="0, 10, 0, 5" />
-						<ComboBox ItemsSource="{Binding Categories}" SelectedItem="{Binding SelectedCategory}">
-							<ComboBox.ItemTemplate>
-								<DataTemplate>
-									<TextBlock Text="{Binding Name}" />
-								</DataTemplate>
-							</ComboBox.ItemTemplate>
-						</ComboBox>
+						<TextBlock Text="Нет данных о расходах"
+									   IsVisible="{Binding IsExpenseEmpty}"
+									   Foreground="Red"
+									   HorizontalAlignment="Center" VerticalAlignment="Center"/>
+					</Grid>
+				</TabItem>
+				<TabItem Header="Новая запись" IsVisible="False">
+					<StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+						<StackPanel Width="300">
+							<TextBlock Text="Сумма" FontSize="16" FontWeight="Bold" Margin="0, 10, 0, 5" />
+							<TextBox Watermark="Введите сумму" Text="{Binding NewIncomeAmount}" />
 
-						<TextBlock Text="Тип" FontSize="16" FontWeight="Bold" Margin="0, 10, 0, 5" />
-						<ComboBox ItemsSource="{Binding Types}" SelectedItem="{Binding SelectedTypes}">
-							<ComboBox.ItemTemplate>
-								<DataTemplate>
-									<TextBlock Text="{Binding Name}" />
-								</DataTemplate>
-							</ComboBox.ItemTemplate>
-						</ComboBox>
+							<TextBlock Text="Категория" FontSize="16" FontWeight="Bold" Margin="0, 10, 0, 5" />
+							<ComboBox ItemsSource="{Binding Categories}" SelectedItem="{Binding SelectedCategory}">
+								<ComboBox.ItemTemplate>
+									<DataTemplate>
+										<TextBlock Text="{Binding Name}" />
+									</DataTemplate>
+								</ComboBox.ItemTemplate>
+							</ComboBox>
 
-						<TextBlock Text="Дата" FontSize="16" FontWeight="Bold" Margin="0, 10, 0, 5" />
-						<DatePicker SelectedDate="{Binding SelectedDate}" />
+							<TextBlock Text="Тип" FontSize="16" FontWeight="Bold" Margin="0, 10, 0, 5" />
+							<ComboBox ItemsSource="{Binding Types}" SelectedItem="{Binding SelectedTypes}">
+								<ComboBox.ItemTemplate>
+									<DataTemplate>
+										<TextBlock Text="{Binding Name}" />
+									</DataTemplate>
+								</ComboBox.ItemTemplate>
+							</ComboBox>
 
+							<TextBlock Text="Дата" FontSize="16" FontWeight="Bold" Margin="0, 10, 0, 5" />
+							<DatePicker SelectedDate="{Binding SelectedDate}" />
+
+						</StackPanel>
+
+						<StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0, 20, 0, 20">
+							<Button Content="Добавить" Command="{Binding ConfirmAddTransactionCommand}"
+									Margin="0, 0, 20, 0" />
+							<Button Content="Назад" Command="{Binding CancelAddTransactionCommand}"
+									Margin="20, 0, 0, 0" />
+						</StackPanel>
+
+
+						<TextBlock Text="{Binding StatusMessage}" Foreground="Red" HorizontalAlignment="Center"
+												   TextWrapping="WrapWithOverflow" Width="400"/>
 					</StackPanel>
-
-					<StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0, 20, 0, 20">
-						<Button Content="Добавить" Command="{Binding ConfirmAddNoteCommand}"
-								Margin="0, 0, 20, 0" />
-						<Button Content="Назад" Command="{Binding CancelAddNoteCommand}"
-								Margin="20, 0, 0, 0" />
-					</StackPanel>
-
-					<TextBlock Text="{Binding StatusMessage}" Foreground="Red" HorizontalAlignment="Center"
-							   TextWrapping="WrapWithOverflow" Width="400"/>
-				</StackPanel>
-				<!--<CheckBox Content="Сегодня" IsChecked="{Binding IsToday}" Margin="0 10 0 10" />-->
-			</TabItem>
-		</TabControl>
+				</TabItem>
+			</TabControl>
+		</Border>
 	</DockPanel>
 </UserControl>

@@ -12,14 +12,12 @@ using System.Threading.Tasks;
 
 namespace AppFin_Program.Services
 {
-    public class ReportService
+    public partial class ReportService : DbContextService
     {
-        private readonly FinAppDataBaseContext _dbContext;
         private readonly UserSessionService _userSessionService;
 
-        public ReportService(FinAppDataBaseContext dbContext, UserSessionService userSessionService)
+        public ReportService(IDbContextFactory<FinAppDataBaseContext> dbContextFactory, UserSessionService userSessionService) : base(dbContextFactory)
         {
-            _dbContext = dbContext;
             _userSessionService = userSessionService;
         }
         public async Task<List<Report>> GetReportsByUserIdAsync(int userId)
@@ -28,8 +26,7 @@ namespace AppFin_Program.Services
             {
                 throw new ArgumentException("Invalid user ID.", nameof(userId));
             }
-
-            return await _dbContext.Reports
+            var reportByUserId = await DbContext.Reports
                 .Where(r => r.UserId == userId)
                 .Select(r => new Report
                 {
@@ -38,14 +35,15 @@ namespace AppFin_Program.Services
                     FilePath = r.FilePath
                 })
                 .ToListAsync();
+            return reportByUserId;
         }
         public async Task DeleteReportAsync(int reportId)
         {
-            var report = await _dbContext.Reports.FindAsync(reportId);
+            var report = await DbContext.Reports.FindAsync(reportId);
             if (report != null)
             {
-                _dbContext.Reports.Remove(report);
-                await _dbContext.SaveChangesAsync();
+                DbContext.Reports.Remove(report);
+                await DbContext.SaveChangesAsync();
             }
         }
         public async Task SaveReportPathAsync(string filePath)
@@ -61,8 +59,8 @@ namespace AppFin_Program.Services
                     FilePath = filePath
                 };
 
-                await _dbContext.Reports.AddAsync(report);
-                await _dbContext.SaveChangesAsync();
+                await DbContext.Reports.AddAsync(report);
+                await DbContext.SaveChangesAsync();
             }
             catch (Exception ex)
             {
@@ -98,7 +96,6 @@ namespace AppFin_Program.Services
                 double columnType = 40;
                 double columnCategory = 150;
                 double columnAmount = 50;
-                double columnDate = 90;
 
                 double startX = 20;
                 double startY = 70;
@@ -160,25 +157,5 @@ namespace AppFin_Program.Services
 
             return directoryPath;
         }
-        //private static string WrapText(string text, int maxWidth)
-        //{
-        //    var result = new StringBuilder();
-        //    var words = text.Split(' ');
-
-        //    int currentLineWidth = 0;
-        //    foreach (var word in words)
-        //    {
-        //        if (currentLineWidth + word.Length > maxWidth)
-        //        {
-        //            result.AppendLine();
-        //            currentLineWidth = 0;
-        //        }
-
-        //        result.Append(word + " ");
-        //        currentLineWidth += word.Length + 1;
-        //    }
-
-        //    return result.ToString();
-        //}
     }
 }

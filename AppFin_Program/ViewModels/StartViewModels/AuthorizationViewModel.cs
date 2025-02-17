@@ -1,5 +1,4 @@
-﻿using AppFin_Program.Models;
-using AppFin_Program.Services;
+﻿using AppFin_Program.Services;
 using AppFin_Program.ViewModels.MainViewModels;
 using ReactiveUI;
 using System;

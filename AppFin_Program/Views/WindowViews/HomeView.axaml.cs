@@ -1,7 +1,4 @@
-using AppFin_Program.ViewModels.WindowViewModels;
-using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Markup.Xaml;
 
 namespace AppFin_Program.Views.WindowViews;
 

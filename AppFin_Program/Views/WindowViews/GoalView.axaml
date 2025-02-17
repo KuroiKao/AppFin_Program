@@ -1,0 +1,53 @@
+<UserControl x:Class="AppFin_Program.Views.WindowViews.GoalView"
+			 xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+			 xmlns:vm="using:AppFin_Program.ViewModels.WindowViewModels"
+	         x:DataType="vm:GoalViewModel"
+			 x:CompileBindings="True"
+			 x:Name="GoalViewControl"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600">
+
+	<Design.DataContext>
+		<vm:GoalViewModel/>
+	</Design.DataContext>
+
+	<DockPanel>
+		<StackPanel Orientation="Vertical" Margin="5" DockPanel.Dock="Top">
+			<TextBlock Text="Цели" FontSize="30" Margin="0,5"/>
+			<StackPanel Orientation="Horizontal">
+				<DockPanel>
+					<TextBox Text="{Binding	NewGoalName}" Width="400"/>
+					<TextBox Text="{Binding NewGoalTargetAmount}"/>
+					<Button Content="Добавить цель" Command="{Binding AddGoalCommand}"/>
+					<Button Content="Вернуться" Command="{Binding ReturnHomeCommand}" DockPanel.Dock="Right"/>
+				</DockPanel>
+			</StackPanel>
+		</StackPanel>
+		<DataGrid Margin="5" 
+				  ItemsSource="{Binding GoalList, Mode=TwoWay}"
+				  SelectedItem="{Binding SelectedGoal, Mode=TwoWay}"
+				  AutoGenerateColumns="False"
+				  CanUserReorderColumns="True" CanUserResizeColumns="True" CanUserSortColumns="True"
+				  GridLinesVisibility="All" 
+				  BorderThickness="1" BorderBrush="Gray">
+			<DataGrid.Columns>
+				<DataGridTextColumn Width="*" Header="Название" Binding="{Binding GoalName, Mode=TwoWay}"/>
+
+				<DataGridTextColumn Width="*" Header="Цель" Binding="{Binding GoalTargetAmount, Mode=TwoWay}"/>
+
+				<DataGridTemplateColumn Width="*" Header="Прогресс">
+					<DataGridTemplateColumn.CellTemplate>
+						<DataTemplate>
+							<ProgressBar Height="20"
+							 Minimum="0" Maximum="100" Value="{Binding GoalProgressBar}"
+							 ShowProgressText="True"/>
+						</DataTemplate>
+					</DataGridTemplateColumn.CellTemplate>
+				</DataGridTemplateColumn>
+			</DataGrid.Columns>
+		</DataGrid>
+		<TextBlock Text="{Binding StatusMessage}" DockPanel.Dock="Bottom"/>
+	</DockPanel>
+</UserControl>

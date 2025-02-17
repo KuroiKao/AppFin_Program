@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace AppFin_Program.Models;
+﻿namespace AppFin_Program.Models;
 
 public partial class Goal
 {

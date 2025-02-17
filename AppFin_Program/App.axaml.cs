@@ -3,6 +3,8 @@ using AppFin_Program.Views.MainViews;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
+using Microsoft.Extensions.Configuration;
+using System.IO;
 
 namespace AppFin_Program
 {
@@ -17,9 +19,16 @@ namespace AppFin_Program
         {
             if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
             {
+                var configuration = new ConfigurationBuilder()
+                    .SetBasePath(Directory.GetCurrentDirectory())
+                    .AddJsonFile("appsettings.json")
+                    .Build();
+                var connectionString = configuration.GetConnectionString("DefaultConnection");
+                var dbContextFactory = new Factory.DbContextFactory(connectionString!);
+
                 desktop.MainWindow = new MainWindowView
                 {
-                    DataContext = new MainWindowViewModel(),
+                    DataContext = new MainWindowViewModel(dbContextFactory),
                 };
             }
 

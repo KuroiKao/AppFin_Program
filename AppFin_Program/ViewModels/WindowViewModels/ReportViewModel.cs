@@ -1,51 +1,55 @@
 using AppFin_Program.Models;
 using AppFin_Program.Services;
 using AppFin_Program.ViewModels.MainViewModels;
-using Avalonia.Collections;
 using DynamicData;
-using PdfSharp;
-using PdfSharp.Drawing;
-using PdfSharp.Pdf;
 using ReactiveUI;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Reactive;
-using System.Reflection;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace AppFin_Program.ViewModels.WindowViewModels;
 
 public class ReportViewModel : ViewModelBase, RoutingViewModels.IRoutableViewModel
 {
-    public string RouteKey => "report";
+    #region Dependency
 
     private readonly UserSessionService _userSessionService;
     private readonly TransactionService _transactionService;
     private readonly ReportService _reportService;
+
+    #endregion
+
+    #region Property
+
+    public string RouteKey => "report";
+
     public ObservableCollection<Report> Reports { get; } = new();
-    private DateTimeOffset? _startDate; 
+
+    private DateTimeOffset? _startDate;
     public DateTimeOffset? StartDate
     {
         get => _startDate;
         set => this.RaiseAndSetIfChanged(ref _startDate, value);
     }
+
     private DateTimeOffset? _endDate;
     public DateTimeOffset? EndDate
     {
         get => _endDate;
         set => this.RaiseAndSetIfChanged(ref _endDate, value);
     }
+
     private bool _includeExpenses;
     public bool IncludeExpenses
     {
         get => _includeExpenses;
         set => this.RaiseAndSetIfChanged(ref _includeExpenses, value);
     }
+
     private bool _includeIncomes;
     public bool IncludeIncomes
     {
@@ -77,21 +81,29 @@ public class ReportViewModel : ViewModelBase, RoutingViewModels.IRoutableViewMod
         set => this.RaiseAndSetIfChanged(ref _selectedReport, value);
     }
 
+    #endregion 
+
+    #region Command
     public ReactiveCommand<Unit, Unit> GenerateReportCommand { get; }
     public ReactiveCommand<Unit, int> CreatReportCommand { get; }
     public ReactiveCommand<Unit, int> CancelReportCommand { get; }
     public ReactiveCommand<Unit, Unit> ReturnCommand { get; }
     public ReactiveCommand<Unit, Unit> MenuItem_Click_Open { get; }
     public ReactiveCommand<Unit, Unit> MenuItem_Click_Delete { get; }
+
+    #endregion
+
     public ReportViewModel()
     {
     }
-    public ReportViewModel(UserSessionService userSessionService, TransactionService transactionService, ReportService reportService, Action<string> navigateTo)
+    public ReportViewModel(UserSessionService userSessionService,
+                           TransactionService transactionService,
+                           ReportService reportService,
+                           Action<string> navigateTo)
     {
         _userSessionService = userSessionService;
         _transactionService = transactionService;
         _reportService = reportService;
-
 
         GenerateReportCommand = ReactiveCommand.CreateFromTask(GenerateReportAsync);
         ReturnCommand = ReactiveCommand.Create(() => navigateTo("home"));
@@ -107,14 +119,12 @@ public class ReportViewModel : ViewModelBase, RoutingViewModels.IRoutableViewMod
             var reports = await _reportService.GetReportsByUserIdAsync(_userSessionService.GetCurrentUserId());
 
             Reports.Clear();
+
             if (reports.Count != 0)
-            {
                 Reports.AddRange(reports);
-            }
+
             else
-            {
                 StatusMessage = "Отчеты не найдены.";
-            }
 
         }
         catch (InvalidOperationException ex)
@@ -167,10 +177,7 @@ public class ReportViewModel : ViewModelBase, RoutingViewModels.IRoutableViewMod
     private async void ContextMenuSelect_Delete()
     {
         if (SelectedReport == null || string.IsNullOrWhiteSpace(SelectedReport.FilePath))
-        {
-            Debug.WriteLine("Файл не найден или отчет не выбран.");
             return;
-        }
 
         try
         {
@@ -179,27 +186,19 @@ public class ReportViewModel : ViewModelBase, RoutingViewModels.IRoutableViewMod
                 File.Delete(SelectedReport.FilePath);
 
                 await _reportService.DeleteReportAsync(SelectedReport.Id);
-
-                Debug.WriteLine($"Файл {SelectedReport.FilePath} успешно удален.");
-
                 await LoadDataGridReportsAsync();
             }
-            else
-            {
-                Debug.WriteLine("Файл не найден.");
-            }
-
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"Ошибка при удалении файла: {ex.Message}");
+            StatusMessage = $"Ошибка при удалении файла: {ex.Message}";
         }
     }
     private void ContextMenuSelect_Open()
     {
         if (SelectedReport == null || string.IsNullOrWhiteSpace(SelectedReport.FilePath))
         {
-            Debug.WriteLine("Файл не найден или отчет не выбран.");
+            StatusMessage = "Файл не найден или отчет не выбран.";
             return;
         }
 
@@ -213,7 +212,7 @@ public class ReportViewModel : ViewModelBase, RoutingViewModels.IRoutableViewMod
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"Ошибка при открытии файла: {ex.Message}");
+            StatusMessage = $"Ошибка при открытии файла: {ex.Message}";
         }
     }
 }

@@ -18,7 +18,7 @@ namespace AppFin_Program.Services
             {
                 throw new InvalidOperationException("No user is currently logged in.");
             }
-            return _currentUserId.Value;
+            return _currentUserId!.Value;
         }
         public void ClearSession()
         {

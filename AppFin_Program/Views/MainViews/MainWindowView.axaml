@@ -1,22 +1,22 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:vm="using:AppFin_Program.ViewModels.MainViewModels"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="using:AppFin_Program.ViewModels.MainViewModels"
         mc:Ignorable="d" d:DesignWidth="300" d:DesignHeight="300"
 		x:CompileBindings="True"
         x:Class="AppFin_Program.Views.MainViews.MainWindowView"
         x:DataType="vm:MainWindowViewModel"
         Icon="/Assets/avalonia-logo.ico"
         Title="AppFin_Program"
-		MinHeight="300" MinWidth="300"
-		SizeToContent="WidthAndHeight" WindowStartupLocation="CenterScreen">
+		MinHeight="400" MinWidth="300" MaxHeight="720" MaxWidth="1280"
+		WindowStartupLocation="CenterScreen">
 
 	<Design.DataContext>
 		<vm:MainWindowViewModel/>
 	</Design.DataContext>
 
-	<StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+	<DockPanel>
 		<ContentControl Content="{Binding CurrentRouter.CurrentView}" />
-	</StackPanel>
+	</DockPanel>
 </Window>
